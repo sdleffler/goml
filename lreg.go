@@ -2,7 +2,7 @@ package goml
 
 import "fmt"
 
-type Predictor (func (Vector) Vector) // Hypothesis function h(x).
+type Predictor (func (Vector) Vector) // Hypothesis function h(x, theta).
 
 type State struct{
 	dim uint // Dimensionality of the dataset.
@@ -36,26 +36,39 @@ func MakeSampleSet(vert [][]float64) []Sample {
 	return d_sms
 }
 
-func NewState(s_dim uint, sams []Sample, pred Predictor) *State {
+func NewState(alpha float64, s_dim uint, sams []Sample, p_dim uint, pred Predictor) *State {
 	for _, v := range sams {
-		if int(s_dim) != len(v.x) { panic(fmt.Sprint("Samples must be of dimensionality ", s_dim, "!")) }
+		if int(s_dim) != len(v.x) { panic(fmt.Sprint("Samples must be of dimensionality ", s_dim, "! Did you forget to set the sample dimension?")) }
 	}
-	return &State{ s_dim, make(Vector, s_dim), 0.01, sams, pred }
+	return &State{ s_dim, make(Vector, p_dim), alpha, sams, pred }
 }
 
 func (st *State) StepBatch() {
 	theta_next := make(Vector, len(st.theta))
 	errs := make([]float64, len(st.samples))
 	for i, sample := range st.samples {
-		errs[i] = (sample.y - Dot(st.theta, st.predictor(sample.x)))
+		errs[i] = (sample.y - Dot(st.predictor(sample.x), st.theta))
 	}
 	for j, theta_j := range st.theta {
 		var sum float64
 		for i, err := range errs {
-			sum += st.samples[i].x[j] * err
+			sum += st.predictor(st.samples[i].x)[j] * err
 		}
-		sum *= st.alpha
-		theta_next[j] = theta_j + sum
+		theta_next[j] = theta_j + st.alpha * sum
 	}
 	st.theta = theta_next
+}
+
+func (st *State) StepStochastic() {
+	for j, _ := range st.theta {
+		for _, sample := range st.samples {
+			st.theta[j] += st.alpha * st.predictor(sample.x)[j] * (sample.y - Dot(st.predictor(sample.x), st.theta))
+		}
+	}
+}
+
+func (st *State) GetPredictor() (func (Vector) float64) {
+	return func (vec Vector) float64 {
+		return Dot(st.predictor(vec), st.theta)
+	}
 }
