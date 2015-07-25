@@ -2,7 +2,7 @@ package goml
 
 import "fmt"
 
-type Predictor (func (Vector) Vector) // Hypothesis function h(x, theta).
+type Predictor (func (Vector) Vector) // Hypothesis function h(x).
 
 type State struct{
 	dim uint // Dimensionality of the dataset.

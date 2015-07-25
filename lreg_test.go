@@ -4,16 +4,6 @@ import "testing"
 import "fmt"
 import "math"
 
-/*func MakeDataSet(f func (float64) float64, x_min float64, x_max float64, n_sams uint) []Sample {
-	st_size := (x_max - x_min) / float64(n_sams)
-	d_sams := make([]Sample, n_sams)
-	for i, _ := range d_sams {
-		x := x_min + (st_size * float64(i))
-		d_sams[i] = MakeSample([]float64{ x, f(x) })
-	}
-	return d_sams
-}*/
-
 type mapFunc func ([]float64) float64
 
 func MakeDataSet(f mapFunc, x_range [][2]float64, n_sams uint) []Sample {
